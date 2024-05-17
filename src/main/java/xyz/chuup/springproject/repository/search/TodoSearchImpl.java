@@ -2,13 +2,13 @@ package xyz.chuup.springproject.repository.search;
 
 import com.querydsl.jpa.JPQLQuery;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import xyz.chuup.springproject.domain.QTodo;
 import xyz.chuup.springproject.domain.Todo;
+import xyz.chuup.springproject.dto.PageRequestDTO;
+
+import java.util.List;
 
 @Log4j2
 public class TodoSearchImpl extends QuerydslRepositorySupport implements TodoSearch {
@@ -19,7 +19,7 @@ public class TodoSearchImpl extends QuerydslRepositorySupport implements TodoSea
     }
 
     @Override
-    public Page<Todo> search1() {
+    public Page<Todo> search1(PageRequestDTO pageRequestDTO) {
 
         log.info("search1.............................");
 
@@ -27,15 +27,19 @@ public class TodoSearchImpl extends QuerydslRepositorySupport implements TodoSea
 
         JPQLQuery<Todo> query = from(todo);
 
-        query.where(todo.title.contains("1"));
+        //query.where(todo.title.contains("1"));
 
-        Pageable pageable = PageRequest.of(1, 10, Sort.by("tno").descending());
+        Pageable pageable = PageRequest.of(
+                pageRequestDTO.getPage() -1,
+                pageRequestDTO.getSize(),
+                Sort.by("tno").descending());
 
         this.getQuerydsl().applyPagination(pageable, query);
 
-        query.fetch();
+        List<Todo> list = query.fetch();
 
-        query.fetchCount();
-        return null;
+        long total = query.fetchCount();
+
+        return new PageImpl<>(list, pageable, total);
     }
 }
